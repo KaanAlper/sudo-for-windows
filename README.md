@@ -1,21 +1,39 @@
-﻿# Sudo for Windows
+# sudo-for-windows
 
-Linux tarzı şifre doğrulamalı ve UAC atlatmalı (fodhelper tabanlı) yerel Windows Sudo aracı.
+A lightweight, Linux-like `sudo` command for Windows with real password verification and seamless elevation.
 
-## 🚀 Tek Satırda Kurulum (One-Line Install)
+## 🚀 Quick Install
 
-PowerShell açıp aşağıdaki komutu yapıştırmanız yeterlidir:
+Run this in PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/KaanAlper/sudo-for-windows/main/install.ps1 | iex
 ```
 
-## Özellikler
-- **CMD ve PowerShell Uyumlu:** CMD içinden çağrılırsa Yönetici CMD, PowerShell içinden çağrılırsa Yönetici PowerShell açar.
-- **Gerçek Windows Parolası:** Ekstra bir PIN/şifre dosyası tutmaz; Windows kimlik doğrulama sistemini (Active Directory / Local Machine) kullanır.
-- **UAC Bypass:** Ekranı donduran güvenli masaüstü pencerelerine takılmadan yükseltilmiş yetkiyle işlem başlatır.
+## Features
 
-## Kullanım
-- Sadece `sudo` -> Bulunulan kabuğa göre (CMD/PowerShell) yeni bir Yönetici penceresi açar.
-- `sudo <komut>` -> İlgili komutu arka planda yönetici yetkisiyle yürütür.
+- **Context-Aware:** Running `sudo` inside CMD opens an elevated CMD. Running it inside PowerShell opens an elevated PowerShell.
+- **Real Windows Password Check:** Uses Windows native authentication (`System.DirectoryServices.AccountManagement`) to verify your Windows account password. No plaintext credentials or pins stored.
+- **Silent Elevation:** Bypasses secure desktop freezes and UAC popups seamlessly.
+- **Universal:** Works in CMD, PowerShell, Windows Terminal, and remote SSH/shells.
 
+## Usage
+
+Open an elevated shell (CMD or PowerShell depending on where you run it):
+```powershell
+sudo
+```
+
+Run a command with administrator privileges in the background:
+```powershell
+sudo <command>
+```
+
+Example:
+```powershell
+sudo "Restart-Service wuauserv"
+```
+
+## License
+
+MIT
