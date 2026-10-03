@@ -1,0 +1,70 @@
+name: Release
+
+# Actions > Release > Run workflow. The version follows the commits since the last release
+# (semantic versioning, the same rule as Logical Lunge): "feat:" -> MINOR, "fix:" / "perf:" / others -> PATCH,
+# "type!:" or a "BREAKING CHANGE: <text>" footer -> MAJOR. "bump" forces the level.
+# A tag that was ever used (failed attempts too) is never reused.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version step: auto reads the commits (feat: minor, fix: patch, type!: or BREAKING CHANGE: major)"
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+        required: true
+      notes:
+        description: "Release notes (optional)"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute the next version
+        id: v
+        shell: pwsh
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          $tags = @(git tag --list 'v*')
+          $last = $tags | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]($_ -replace '^v', '') } -Descending | Select-Object -First 1
+          $commits = @()
+          if ($last) { $commits = @((git log "$last..HEAD" --format='%s%n%b%x1e') -join "`n" -split [char]0x1e) }
+          $ver = & ./tools/release-version.ps1 -BaseVersion '1.0.0' -Tags $tags -Commits $commits -Bump $env:BUMP
+          Write-Host "Last release: $last, step: $env:BUMP -> $ver"
+          "ver=$ver" >> $env:GITHUB_OUTPUT
+          "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+
+      - name: Package
+        shell: pwsh
+        run: ./tools/build.ps1 -Version ${{ steps.v.outputs.ver }}
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.ver }}
+          target_commitish: ${{ steps.v.outputs.sha }}
+          name: sudo for Windows v${{ steps.v.outputs.ver }}
+          body: ${{ inputs.notes }}
+          files: |
+            dist/sudo-for-windows-${{ steps.v.outputs.ver }}.zip
+            dist/sudo-for-windows-${{ steps.v.outputs.ver }}.zip.sha256
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          draft: false
+          make_latest: "true"

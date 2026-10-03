@@ -1,0 +1,47 @@
+name: Build
+
+# Every push / PR: package the zip and try install.ps1 (install, update, uninstall) on Windows.
+# To publish a version: Actions > Release > Run workflow.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package
+        shell: pwsh
+        run: ./tools/build.ps1 -Version 0.0.${{ github.run_number }}
+
+      - name: install.ps1 - install, update, uninstall
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\sudo-for-windows'
+          $dir = Join-Path $env:LOCALAPPDATA 'Programs\sudo-for-windows'
+          $env:SUDO4WIN_SOURCE = (Resolve-Path 'dist/sudo-for-windows-*.zip').Path
+          $env:SUDO4WIN_DEFAULTS = '1'
+          ./install.ps1
+          if (-not (Test-Path "$dir\sudo.cmd")) { throw 'not installed' }
+          if ((Get-ItemProperty $key).DisplayVersion -ne '0.0.${{ github.run_number }}') { throw 'wrong version in Apps' }
+          if (-not ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' -contains $dir)) { throw 'not on the user PATH' }
+          ./install.ps1
+          if (([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ -eq $dir }).Count -ne 1) { throw 'PATH entry duplicated' }
+          $env:SUDO4WIN_UNINSTALL = '1'
+          ./install.ps1
+          if ((Test-Path $dir) -or (Test-Path $key)) { throw 'uninstall left files behind' }
+          if ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' -contains $dir) { throw 'PATH entry left behind' }
+          'install / update / uninstall ok'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sudo-for-windows
+          path: dist/*
