@@ -41,6 +41,13 @@ jobs:
           if ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' -contains $dir) { throw 'PATH entry left behind' }
           'install / update / uninstall ok'
 
+      # The windowed setup app (installer/gui): builds both exes, draws every page and proves it starts and talks to install.ps1
+      - name: Setup app - build x64 / x86, draw the pages, install and remove it through the window
+        shell: pwsh
+        run: |
+          $env:SUDO4WIN_SOURCE = (Resolve-Path 'dist/sudo-for-windows-*.zip').Path
+          ./installer/gui/build.ps1 -Out dist -Shots -Smoke install
+
       - uses: actions/upload-artifact@v4
         with:
           name: sudo-for-windows

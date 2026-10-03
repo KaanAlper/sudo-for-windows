@@ -10,6 +10,8 @@ Run this in PowerShell:
 irm https://raw.githubusercontent.com/KaanAlper/sudo-for-windows/main/install.ps1 | iex
 ```
 
+**Windowed setup:** [**sudo-for-windows-Setup-x64.exe**](https://github.com/KaanAlper/sudo-for-windows/releases/latest/download/sudo-for-windows-Setup-x64.exe) ([sudo-for-windows-Setup-x86.exe](https://github.com/KaanAlper/sudo-for-windows/releases/latest/download/sudo-for-windows-Setup-x86.exe) for 32-bit Windows) — the same install with buttons: language choice, progress, undo on cancel; when it is already installed it offers **Update / Repair / Uninstall**.
+
 It installs the latest release for your user (no administrator rights) into `%LOCALAPPDATA%\Programs\sudo-for-windows`, adds it to your user `PATH` and to **Settings > Apps** with an uninstaller. Running the same command again updates it; if anything fails or you press Ctrl+C, everything goes back to how it was. Open a new terminal afterwards.
 
 To remove it: Settings > Apps > sudo for Windows, or

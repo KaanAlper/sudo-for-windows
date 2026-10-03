@@ -54,6 +54,10 @@ jobs:
         shell: pwsh
         run: ./tools/build.ps1 -Version ${{ steps.v.outputs.ver }}
 
+      - name: Setup app (x64 / x86)
+        shell: pwsh
+        run: ./installer/gui/build.ps1 -Out dist
+
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
@@ -64,6 +68,10 @@ jobs:
           files: |
             dist/sudo-for-windows-${{ steps.v.outputs.ver }}.zip
             dist/sudo-for-windows-${{ steps.v.outputs.ver }}.zip.sha256
+            dist/sudo-for-windows-Setup-x64.exe
+            dist/sudo-for-windows-Setup-x64.exe.sha256
+            dist/sudo-for-windows-Setup-x86.exe
+            dist/sudo-for-windows-Setup-x86.exe.sha256
           fail_on_unmatched_files: true
           generate_release_notes: true
           draft: false
